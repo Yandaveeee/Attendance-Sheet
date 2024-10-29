@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance Sheet</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 400px;
+            margin: auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        h3 {
+            margin-top: 20px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        .message {
+            text-align: center;
+            margin-top: 15px;
+            display: none; /* Hide message initially */
+        }
+        .attendance-list {
+            margin-top: 20px;
+            border-top: 1px solid #ccc;
+            padding-top: 10px;
+        }
+        .attendance-list h3 {
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        ul {
+            padding-left: 0; /* Removes default padding */
+            list-style-type: none; /* Removes bullet points */
+        }
+        li {
+            margin-bottom: 5px; /* Adds space between list items */
+        }
+        .section {
+            display: none; /* Hide sections initially */
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Attendance Sheet</h2>
+
+    <!-- Choose Action Buttons -->
+    <h3>Choose an Action</h3>
+    <button onclick="showSection('create')">Create ID</button>
+    <button onclick="showSection('login')">Log In</button>
+
+    <!-- Teacher ID Creation Section -->
+    <div class="section" id="create-section">
+        <h3>Create ID</h3>
+        <input type="text" id="developer-id" placeholder="Enter your ID (e.g., N001)">
+        <input type="text" id="developer-name" placeholder="Enter your Name">
+        <button onclick="createTeacherId()">Submit</button>
+    </div>
+
+    <!-- Login Section -->
+    <div class="section" id="login-section">
+        <h3>Log In</h3>
+        <input type="text" id="teacher-id" placeholder="Enter your ID (e.g., N001)">
+        <button onclick="submitAttendance()">Submit</button>
+    </div>
+
+    <!-- Message Display -->
+    <div class="message" id="message"></div>
+
+    <!-- Attendance List Section -->
+    <div class="attendance-list" id="attendance-list" style="display: none;">
+        <h3>Attendance Submitted:</h3>
+        <ul id="attendance-record"></ul>
+    </div>
+    
+    <button onclick="clearAttendance()">Clear Attendance</button>
+</div>
+
+<script>
+    const teachers = {};
+    const attendanceRecords = new Set(); // Use a Set to prevent duplicates
+
+    // Show the selected section and hide others
+    function showSection(section) {
+        const createSection = document.getElementById("create-section");
+        const loginSection = document.getElementById("login-section");
+
+        createSection.style.display = section === 'create' ? 'block' : 'none';
+        loginSection.style.display = section === 'login' ? 'block' : 'none';
+        document.getElementById("message").style.display = "none"; // Hide any previous messages
+        document.getElementById("attendance-list").style.display = "none"; // Hide attendance list
+        document.getElementById("attendance-record").innerHTML = ""; // Clear attendance records
+    }
+
+    function createTeacherId() {
+        const developerId = document.getElementById("developer-id").value.trim();
+        const developerName = document.getElementById("developer-name").value.trim();
+        const messageDiv = document.getElementById("message");
+
+        // Clear previous message
+        messageDiv.style.display = "none"; 
+
+        if (!developerName) {
+            showMessage("Teacher Name cannot be empty. Please try again.", "red");
+            return;
+        }
+
+        if (!/^[A-Za-z]\d+$/.test(developerId)) {
+            showMessage("ID must start with a letter followed by numbers only. Please try again.", "red");
+            return;
+        }
+
+        if (!teachers[developerId]) {
+            teachers[developerId] = developerName;
+            showMessage(`Your ID ${developerId} has been created for ${developerName}!`, "green");
+            document.getElementById("developer-id").value = ""; // Clear input
+            document.getElementById("developer-name").value = ""; // Clear name input
+        } else {
+            showMessage("Invalid or already existing ID. Please try again.", "red");
+        }
+    }
+
+    function submitAttendance() {
+        const teacherId = document.getElementById("teacher-id").value.trim();
+        const messageDiv = document.getElementById("message");
+
+        // Clear previous message
+        messageDiv.style.display = "none"; 
+
+        if (!/^[A-Za-z]\d+$/.test(teacherId)) {
+            showMessage("ID must start with a letter followed by numbers only. Please try again.", "red");
+            return;
+        }
+
+        if (teachers[teacherId]) {
+            const teacherName = teachers[teacherId];
+            const record = `${teacherName} (${teacherId})`;
+
+            if (attendanceRecords.has(record)) {
+                showMessage("Attendance already recorded for this ID.", "orange");
+                return;
+            }
+
+            attendanceRecords.add(record);
+            showMessage(`Attendance for ${teacherName} (${teacherId}) has been recorded.`, "green");
+            displayAttendanceRecords();
+            document.getElementById("teacher-id").value = ""; // Clear input after submission
+        } else {
+            showMessage("Invalid ID. Please try again.", "red");
+        }
+    }
+
+    function displayAttendanceRecords() {
+        const attendanceList = document.getElementById("attendance-record");
+        attendanceList.innerHTML = ""; // Clear current list
+
+        attendanceRecords.forEach(record => {
+            const li = document.createElement("li");
+            li.textContent = record; // Add attendance record to the list
+            attendanceList.appendChild(li);
+        });
+        document.getElementById("attendance-list").style.display = "block"; // Show attendance list
+    }
+
+    function clearAttendance() {
+        if (attendanceRecords.size === 0) {
+            showMessage("No attendance records to clear.", "orange");
+            return;
+        }
+        
+        attendanceRecords.clear();
+        document.getElementById("attendance-record").innerHTML = ""; // Clear the list
+        document.getElementById("attendance-list").style.display = "none"; // Hide the list
+        showMessage("Attendance records cleared.", "green");
+    }
+
+    function showMessage(message, color) {
+        const messageDiv = document.getElementById("message");
+        messageDiv.textContent = message;
+        messageDiv.style.color = color;
+        messageDiv.style.display = "block"; // Show message
+    }
+
+    // Initialize the interface by showing the create section
+    showSection('create');
+</script>
+
+</body>
+</html>
